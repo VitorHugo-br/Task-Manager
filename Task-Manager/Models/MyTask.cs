@@ -12,7 +12,7 @@ namespace Task_Manager.Models
         public DateTime EndDate { get; set; }
         public DateTime DueDate { get; set; }
         public required string RequestedBy { get; set; }
-        public string? SignedTo { get; set; }
+        public User? SignedTo { get; set; }
 
     }
 }
