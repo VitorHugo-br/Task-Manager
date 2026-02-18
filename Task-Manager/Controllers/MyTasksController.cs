@@ -16,137 +16,64 @@ namespace Task_Manager.Controllers
             _context = context;
         }
 
-        // GET: MyTasks
-        public async Task<IActionResult> Index()
+        [HttpGet]
+        [Route("GetTasks")]
+        public async Task<IEnumerable<MyTask>> GetTasks()
         {
-            return View(await _context.Tasks.ToListAsync());
+            var tasks = await _context.Tasks.ToListAsync();
+            return tasks;
         }
 
-        // GET: MyTasks/Details/5
-        public async Task<IActionResult> Details(int? id)
+        [HttpGet]
+        [Route("GetTaskById/{id}")]
+        public async Task<ActionResult<MyTask>> GetTaskById(int id)
         {
-            if (id == null)
+            var task = await _context.Tasks.FindAsync(id);
+            if (task == null)
             {
                 return NotFound();
             }
-
-            var myTask = await _context.Tasks
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (myTask == null)
-            {
-                return NotFound();
-            }
-
-            return View(myTask);
+            return task;
         }
 
-        // GET: MyTasks/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: MyTasks/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,Description,Status,StartDate,EndDate,DueDate,RequestedBy")] MyTask myTask)
+        [Route("CreateTask")]
+        public async Task<ActionResult<MyTask>> CreateTask(MyTask task)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(myTask);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(myTask);
-        }
-
-        // GET: MyTasks/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var myTask = await _context.Tasks.FindAsync(id);
-            if (myTask == null)
-            {
-                return NotFound();
-            }
-            return View(myTask);
-        }
-
-        // POST: MyTasks/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Description,Status,StartDate,EndDate,DueDate,RequestedBy")] MyTask myTask)
-        {
-            if (id != myTask.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(myTask);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!MyTaskExists(myTask.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(myTask);
-        }
-
-        // GET: MyTasks/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var myTask = await _context.Tasks
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (myTask == null)
-            {
-                return NotFound();
-            }
-
-            return View(myTask);
-        }
-
-        // POST: MyTasks/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var myTask = await _context.Tasks.FindAsync(id);
-            if (myTask != null)
-            {
-                _context.Tasks.Remove(myTask);
-            }
-
+            _context.Tasks.Add(task);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Created();
         }
 
-        private bool MyTaskExists(int id)
+        //TODO: Modificar o update para receber apenas os campos que podem ser atualizados, e não o objeto inteiro. e possibitar o update parcial, ou seja, atualizar apenas os campos que foram enviados no request.
+        [HttpPut]
+        [Route("UpdateTask/{id}")]
+        public async Task<IActionResult> UpdateTask(int id, MyTask updatedTask)
+        {
+            if (id != updatedTask.Id)
+            {
+                return BadRequest();
+            }
+            _context.Entry(updatedTask).State = EntityState.Modified;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!TaskExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return NoContent();
+        }
+
+        private bool TaskExists(int id)
         {
             return _context.Tasks.Any(e => e.Id == id);
         }
