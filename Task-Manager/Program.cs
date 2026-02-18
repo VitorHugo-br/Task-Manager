@@ -1,4 +1,10 @@
+using Task_Manager.Services;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddTransient<TokenService>();
+
+builder.Services.AddEndpointsApiExplorer();
 
 // Add services to the container.
 
@@ -7,6 +13,8 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+app.MapGet("/", (TokenService service) => service.GenerateToken(null));
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
