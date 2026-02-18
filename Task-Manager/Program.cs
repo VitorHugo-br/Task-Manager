@@ -1,10 +1,15 @@
 using Task_Manager.Services;
+using Task_Manager.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddTransient<TokenService>();
+builder.Services.AddTransient<AuthService>();
 
 builder.Services.AddEndpointsApiExplorer();
+
+// Register EF Core DbContext for dependency injection
+builder.Services.AddDbContext<TaskDbContext>();
 
 // Add services to the container.
 
@@ -13,8 +18,6 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
-
-app.MapGet("/", (TokenService service) => service.GenerateToken(null));
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
