@@ -11,7 +11,7 @@ namespace Task_Manager.Data
 
         override protected void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseNpgsql();
+            optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=TaskDB;Username=VITORHUGO;Password=Vi@@2022");
         }
     }
 }

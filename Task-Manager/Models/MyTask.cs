@@ -1,9 +1,12 @@
-﻿using Task_Manager.Models.Enums;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using Task_Manager.Models.Enums;
 
 namespace Task_Manager.Models
 {
     public class MyTask
     {
+        [Key]
         public int Id { get; set; }
         public required string Title { get; set; }
         public required string Description { get; set; }
