@@ -24,7 +24,6 @@ namespace Task_Manager.Controllers
         [Route("register")]
         public async Task<IActionResult> Create(UserDTO user)
         {
-
             if (user == null)
             {
                 return BadRequest("Invalid data");
@@ -43,12 +42,34 @@ namespace Task_Manager.Controllers
                 Roles = user.Roles
             };
 
-            var userToken = _authService.GenerateToken(newUser);
-
             await _context.Users.AddAsync(newUser);
             await _context.SaveChangesAsync();
 
-            return Created(String.Empty, userToken);
+            return Created();
+        }
+
+        [HttpPost]
+        [Route("login")]
+        public IActionResult Login(string email, string password)
+        {
+            var user = _context.Users.FirstOrDefault(u => u.Email == email);
+            if (user == null || !_authService.VerifyPassword(password, user.Password))
+            {
+                return Unauthorized("Invalid credentials");
+            }
+
+            var token = _authService.GenerateToken(user);
+
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = DateTime.UtcNow.AddHours(1)
+            };
+
+            Response.Cookies.Append("tkon", token, cookieOptions);
+
+            return Ok(new { Token = token });
+
         }
     }
 }

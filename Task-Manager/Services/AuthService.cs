@@ -2,6 +2,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Security.Cryptography;
 using Task_Manager.Models;
 
 namespace Task_Manager.Services
@@ -62,12 +63,9 @@ namespace Task_Manager.Services
 
         public string GetHashedPassword(string password)
         {
-            using (var sha256 = System.Security.Cryptography.SHA256.Create())
-            {
-                var bytes = Encoding.UTF8.GetBytes(password);
-                var hash = sha256.ComputeHash(bytes);
-                return Convert.ToBase64String(hash);
-            }
+            var bytes = Encoding.UTF8.GetBytes(password);
+            var hash = SHA256.HashData(bytes);
+            return Convert.ToBase64String(hash);
         }
 
         public bool VerifyPassword(string password, string hashedPassword)
