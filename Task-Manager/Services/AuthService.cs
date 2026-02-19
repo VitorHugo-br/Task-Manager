@@ -30,11 +30,8 @@ namespace Task_Manager.Services
         public ClaimsIdentity GenerateClaims(User user)
         {
             var ci = new ClaimsIdentity();
-            ci.AddClaim(new Claim(ClaimTypes.Name, user.Email));
-            foreach (var role in user.Roles)
-            {
-                ci.AddClaim(new Claim(ClaimTypes.Role, role));
-            }
+            ci.AddClaim(new Claim(ClaimTypes.Email, user.Email));
+            ci.AddClaim(new Claim(ClaimTypes.Role, user.Role));
 
             return ci;
         }

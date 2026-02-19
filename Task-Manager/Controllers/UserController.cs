@@ -22,7 +22,7 @@ namespace Task_Manager.Controllers
 
         [HttpPost]
         [Route("register")]
-        public async Task<IActionResult> Create(UserDTO user)
+        public async Task<IActionResult> Create([FromBody] UserDTO user)
         {
             if (user == null)
             {
@@ -39,7 +39,7 @@ namespace Task_Manager.Controllers
                 Name = user.Name,
                 Email = user.Email,
                 Password = _authService.GetHashedPassword(user.Password),
-                Roles = user.Roles
+                Role = user.Role
             };
 
             await _context.Users.AddAsync(newUser);
@@ -50,10 +50,10 @@ namespace Task_Manager.Controllers
 
         [HttpPost]
         [Route("login")]
-        public IActionResult Login(string email, string password)
+        public IActionResult Login([FromBody] LoginDTO login)
         {
-            var user = _context.Users.FirstOrDefault(u => u.Email == email);
-            if (user == null || !_authService.VerifyPassword(password, user.Password))
+            var user = _context.Users.FirstOrDefault(u => u.Email == login.Email);
+            if (user == null || !_authService.VerifyPassword(login.Password, user.Password))
             {
                 return Unauthorized("Invalid credentials");
             }

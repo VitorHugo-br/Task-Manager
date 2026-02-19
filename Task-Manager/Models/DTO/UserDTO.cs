@@ -4,7 +4,7 @@
         string Name,
         string Email,
         string Password,
-        string[] Roles
+        string Role
     );
-    
+
 }

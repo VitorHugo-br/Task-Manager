@@ -9,9 +9,11 @@ namespace Task_Manager.Data
 
         public DbSet<User> Users { get; set; }
 
+        public DbSet<ErrorLog> ErrorLogs { get; set; }
+
         override protected void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=TaskDB;Username=VITORHUGO;Password=Vi@@2022");
+            optionsBuilder.UseMySQL("Host=localhost;Port=3306;Database=mysqlDB;Username=user_vitorhugo;Password=vi@@2022");
         }
     }
 }
