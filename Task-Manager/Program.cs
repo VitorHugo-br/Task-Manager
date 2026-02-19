@@ -1,6 +1,6 @@
 using Task_Manager.Services;
 using Task_Manager.Data;
-using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,10 +24,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/openapi/v1.json", "Task Manager API V1");
-    });
+    app.MapScalarApiReference("/api-docs");
 }
 
 app.UseHttpsRedirection();

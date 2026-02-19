@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using Task_Manager.Data;
@@ -23,16 +24,22 @@ namespace Task_Manager.Controllers
 
         [HttpGet]
         [Route("GetTasks")]
-        public async Task<IEnumerable<MyTask>> GetTasks()
+        public async Task<ActionResult<IEnumerable<MyTask>>> GetTasks()
         {
+            var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+            var isValidToken = _authService.ValidateToken(bearerToken);
+            if (!isValidToken) return Unauthorized("Invalid Credentials");
             var tasks = await _context.Tasks.ToListAsync();
-            return tasks;
+            return Ok(tasks);
         }
 
         [HttpGet]
         [Route("GetTaskById/{id}")]
         public async Task<ActionResult<MyTask>> GetTaskById(int id)
         {
+            var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+            var isValidToken = _authService.ValidateToken(bearerToken);
+            if (!isValidToken) return Unauthorized("Invalid Credentials");
             var task = await _context.Tasks.FindAsync(id);
             if (task == null)
             {
@@ -60,6 +67,7 @@ namespace Task_Manager.Controllers
             var newTask = new MyTask
             {
                 Title = task.Title,
+                Guid = Guid.NewGuid(),
                 Description = task.Description,
                 Status = task.Status,
                 StartDate = task.StartDate,
@@ -106,5 +114,7 @@ namespace Task_Manager.Controllers
         {
             return _context.Tasks.Any(e => e.Id == id);
         }
+
+        
     }
 }
