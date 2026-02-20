@@ -3,8 +3,11 @@ using Task_Manager.Models;
 
 namespace Task_Manager.Data
 {
-    public class TaskDbContext : DbContext
+    public class TaskDbContext(IConfiguration configuration) : DbContext
     {
+
+        private readonly IConfiguration _configuration = configuration;
+
         public DbSet<MyTask> Tasks { get; set; }
 
         public DbSet<User> Users { get; set; }
@@ -13,7 +16,7 @@ namespace Task_Manager.Data
 
         override protected void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySQL("Host=localhost;Port=3306;Database=mysqlDB;Username=user_vitorhugo;Password=vi@@2022");
+            optionsBuilder.UseMySQL(_configuration.GetConnectionString("DefaultConnection")!);
         }
     }
 }

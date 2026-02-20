@@ -7,12 +7,15 @@ using Task_Manager.Models;
 
 namespace Task_Manager.Services
 {
-    public class AuthService
+    public class AuthService(IConfiguration configuration)
     {
+
+        private readonly IConfiguration _configuration = configuration;
+
         public string GenerateToken(User user)
         {
             var handler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(Configuration.SecretKey);
+            var key = Encoding.ASCII.GetBytes(_configuration.GetSection("SecretKey").Value!);
             var credentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature);
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -39,7 +42,7 @@ namespace Task_Manager.Services
         public bool ValidateToken(string token)
         {
             var handler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(Configuration.SecretKey);
+            var key = Encoding.ASCII.GetBytes(_configuration.GetSection("SecretKey").Value!);
             try
             {
                 handler.ValidateToken(token, new TokenValidationParameters

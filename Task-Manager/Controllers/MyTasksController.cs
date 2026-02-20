@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using Task_Manager.Data;
@@ -29,7 +28,9 @@ namespace Task_Manager.Controllers
             var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
             var isValidToken = _authService.ValidateToken(bearerToken);
             if (!isValidToken) return Unauthorized("Invalid Credentials");
+
             var tasks = await _context.Tasks.ToListAsync();
+
             return Ok(tasks);
         }
 
@@ -40,12 +41,15 @@ namespace Task_Manager.Controllers
             var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
             var isValidToken = _authService.ValidateToken(bearerToken);
             if (!isValidToken) return Unauthorized("Invalid Credentials");
+
             var task = await _context.Tasks.FindAsync(id);
+
             if (task == null)
             {
-                return NotFound();
+                return NotFound("Task not found!");
             }
-            return task;
+
+            return Ok(task);
         }
 
         [HttpPost]
@@ -85,36 +89,36 @@ namespace Task_Manager.Controllers
         //TODO: Modificar o update para receber apenas os campos que podem ser atualizados, e não o objeto inteiro. e possibitar o update parcial, ou seja, atualizar apenas os campos que foram enviados no request.
         [HttpPut]
         [Route("UpdateTask/{id}")]
-        public async Task<IActionResult> UpdateTask(int id, MyTask updatedTask)
+        public async Task<IActionResult> UpdateTask(int id, TaskDTO task)
         {
-            if (id != updatedTask.Id)
-            {
-                return BadRequest();
-            }
-            _context.Entry(updatedTask).State = EntityState.Modified;
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TaskExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return NoContent();
+            //Verificar se o token é válido
+            var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+            var isValidToken = _authService.ValidateToken(bearerToken);
+            if (!isValidToken) return Unauthorized("Invalid Credentials");
+
+            //Verificar se a task existe
+            if (task == null) return BadRequest("Task data is required.");
+            if (!TaskExists(id)) return BadRequest($"TaskID: {id} doesn't exist!");
+
+            var ExistingTask = await _context.Tasks.FirstAsync(tk => tk.Id == id);
+
+            ExistingTask.Title = task.Title;
+            ExistingTask.Description = task.Description;
+            ExistingTask.Status = task.Status;
+            ExistingTask.StartDate = task.StartDate;
+            ExistingTask.EndDate = task.EndDate;
+            ExistingTask.DueDate = task.DueDate;
+            ExistingTask.User = await _context.Users.FirstOrDefaultAsync(u => u.Id == task.UserId);
+
+            _context.Entry(ExistingTask).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return Ok($"Task {ExistingTask.Id} updated");
+
         }
 
         private bool TaskExists(int id)
         {
             return _context.Tasks.Any(e => e.Id == id);
         }
-
-        
     }
 }
