@@ -11,8 +11,8 @@ using Task_Manager.Data;
 namespace Task_Manager.Migrations
 {
     [DbContext(typeof(TaskDbContext))]
-    [Migration("20260219164435_FirstMysql")]
-    partial class FirstMysql
+    [Migration("20260220030836_UserIDnew")]
+    partial class UserIDnew
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,11 +49,14 @@ namespace Task_Manager.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<DateTime>("DueDate")
+                    b.Property<DateTime?>("DueDate")
                         .HasColumnType("datetime(6)");
 
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("Guid")
+                        .HasColumnType("char(36)");
 
                     b.Property<string>("RequestedBy")
                         .IsRequired()

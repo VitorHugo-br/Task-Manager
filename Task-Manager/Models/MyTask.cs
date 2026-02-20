@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Task_Manager.Models.Enums;
 
 namespace Task_Manager.Models
@@ -14,10 +13,10 @@ namespace Task_Manager.Models
         public Status Status { get; set; } = Status.Pending;
         public DateTime? StartDate { get; set; } = null;
         public DateTime? EndDate { get; set; } = null;
-        public DateTime DueDate { get; set; }
+        public DateTime? DueDate { get; set; }
         public required string RequestedBy { get; set; }
+        public int? UserId { get; set; }
         public User? User { get; set; }
-        
 
     }
 }

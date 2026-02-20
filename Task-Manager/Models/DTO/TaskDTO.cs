@@ -9,7 +9,7 @@ namespace Task_Manager.Models.DTO
         public Status Status { get; set; } = Status.Pending;
         public DateTime? StartDate { get; set; } = null;
         public DateTime? EndDate { get; set; } = null;
-        public DateTime DueDate { get; set; }
+        public DateTime? DueDate { get; set; } = null;
         public int? UserId { get; set; }
     }
 }

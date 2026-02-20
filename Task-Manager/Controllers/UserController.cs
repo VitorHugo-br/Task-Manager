@@ -8,17 +8,11 @@ namespace Task_Manager.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class UserController : Controller
+    public class UserController(TaskDbContext context, AuthService authService) : Controller
     {
 
-        private readonly TaskDbContext _context;
-        private readonly AuthService _authService;
-
-        public UserController(TaskDbContext context, AuthService authService)
-        {
-            _context = context;
-            _authService = authService;
-        }
+        private readonly TaskDbContext _context = context;
+        private readonly AuthService _authService = authService;
 
         [HttpPost]
         [Route("register")]

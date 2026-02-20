@@ -72,7 +72,7 @@ namespace Task_Manager.Controllers
                 EndDate = task.EndDate,
                 DueDate = task.DueDate,
                 RequestedBy = user.Name,
-                User = await _context.Users.FirstOrDefaultAsync(u => u.Id == task.UserId)
+                UserId = task.UserId
             };
 
             _context.Tasks.Add(newTask);
