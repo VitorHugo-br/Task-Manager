@@ -10,16 +10,10 @@ namespace Task_Manager.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class MyTasksController : Controller
+    public class MyTasksController(TaskDbContext context, AuthService authService) : Controller
     {
-        private readonly TaskDbContext _context;
-        private readonly AuthService _authService;
-
-        public MyTasksController(TaskDbContext context, AuthService authService)
-        {
-            _context = context;
-            _authService = authService;
-        }
+        private readonly TaskDbContext _context = context;
+        private readonly AuthService _authService = authService;
 
         [HttpGet]
         [Route("GetTasks")]
