@@ -18,15 +18,9 @@ namespace Task_Manager.Controllers
         [Route("register")]
         public async Task<IActionResult> Create([FromBody] UserDTO user)
         {
-            if (user == null)
-            {
-                return BadRequest("Invalid data");
-            }
-
-            if (_context.Users.Any(u => u.Email == user.Email))
-            {
-                return BadRequest("User already exists");
-            }
+            if (user == null) return BadRequest("Invalid data");
+           
+            if (_context.Users.Any(u => u.Email == user.Email)) return BadRequest("User already exists");
 
             var newUser = new User
             {
@@ -35,7 +29,7 @@ namespace Task_Manager.Controllers
                 Password = _authService.GetHashedPassword(user.Password),
                 Role = user.Role
             };
-
+            
             await _context.Users.AddAsync(newUser);
             await _context.SaveChangesAsync();
 
@@ -53,14 +47,6 @@ namespace Task_Manager.Controllers
             }
 
             var token = _authService.GenerateToken(user);
-
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Expires = DateTime.UtcNow.AddHours(1)
-            };
-
-            Response.Cookies.Append("tkon", token, cookieOptions);
 
             return Ok(new { Token = token });
 

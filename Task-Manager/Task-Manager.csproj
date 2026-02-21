@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Task_Manager</RootNamespace>
+    <UserSecretsId>72eaea54-ae12-4a29-ad64-97ea8f9044f2</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

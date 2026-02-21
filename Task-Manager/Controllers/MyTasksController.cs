@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using Task_Manager.Data;
@@ -10,6 +11,7 @@ namespace Task_Manager.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize]
     public class MyTasksController(TaskDbContext context, AuthService authService) : Controller
     {
         private readonly TaskDbContext _context = context;
@@ -19,9 +21,6 @@ namespace Task_Manager.Controllers
         [Route("GetTasks")]
         public async Task<ActionResult<IEnumerable<MyTask>>> GetTasks()
         {
-            var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-            var isValidToken = _authService.ValidateToken(bearerToken);
-            if (!isValidToken) return Unauthorized("Invalid Credentials");
 
             var tasks = await _context.Tasks.ToListAsync();
 
@@ -32,9 +31,6 @@ namespace Task_Manager.Controllers
         [Route("GetTaskById/{id}")]
         public async Task<ActionResult<MyTask>> GetTaskById(int id)
         {
-            var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-            var isValidToken = _authService.ValidateToken(bearerToken);
-            if (!isValidToken) return Unauthorized("Invalid Credentials");
 
             var task = await _context.Tasks.FindAsync(id);
 
@@ -52,8 +48,6 @@ namespace Task_Manager.Controllers
         {
 
             var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-            var isValidToken = _authService.ValidateToken(bearerToken);
-            if (!isValidToken) return Unauthorized("Invalid Credentials");
 
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(bearerToken);
@@ -86,9 +80,9 @@ namespace Task_Manager.Controllers
         public async Task<IActionResult> UpdateTask(int id, TaskDTO task)
         {
             //Verificar se o token é válido
-            var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-            var isValidToken = _authService.ValidateToken(bearerToken);
-            if (!isValidToken) return Unauthorized("Invalid Credentials");
+            //var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+            //var isValidToken = _authService.ValidateToken(bearerToken);
+            //if (!isValidToken) return Unauthorized("Invalid Credentials");
 
             //Verificar se a task existe
             if (task == null) return BadRequest("Task data is required.");

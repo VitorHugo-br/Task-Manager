@@ -4,7 +4,7 @@
         string Name,
         string Email,
         string Password,
-        string Role
+        string Role = "User"
     );
 
 }

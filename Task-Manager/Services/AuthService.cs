@@ -39,28 +39,6 @@ namespace Task_Manager.Services
             return ci;
         }
 
-        public bool ValidateToken(string token)
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration.GetSection("SecretKey").Value!);
-            try
-            {
-                handler.ValidateToken(token, new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ClockSkew = TimeSpan.Zero
-                }, out SecurityToken validatedToken);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
         public string GetHashedPassword(string password)
         {
             var bytes = Encoding.UTF8.GetBytes(password);
