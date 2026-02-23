@@ -1,55 +1,33 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Task_Manager.Data;
-using Task_Manager.Models;
-using Task_Manager.Models.DTO;
-using Task_Manager.Services;
 
 namespace Task_Manager.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class UserController(TaskDbContext context, AuthService authService) : Controller
+    public class UserController(TaskDbContext context) : Controller
     {
 
         private readonly TaskDbContext _context = context;
-        private readonly AuthService _authService = authService;
 
-        [HttpPost]
-        [Route("register")]
-        public async Task<IActionResult> Create([FromBody] UserDTO user)
+        [HttpGet]
+        [Route("listUsers")]
+        public IActionResult ListUsers()
         {
-            if (user == null) return BadRequest("Invalid data");
-           
-            if (_context.Users.Any(u => u.Email == user.Email)) return BadRequest("User already exists");
-
-            var newUser = new User
-            {
-                Name = user.Name,
-                Email = user.Email,
-                Password = _authService.GetHashedPassword(user.Password),
-                Role = user.Role
-            };
-            
-            await _context.Users.AddAsync(newUser);
-            await _context.SaveChangesAsync();
-
-            return Created();
+            var users = _context.Users.ToList();
+            return Ok(users);
         }
 
-        [HttpPost]
-        [Route("login")]
-        public IActionResult Login([FromBody] LoginDTO login)
+        [HttpGet]
+        [Route("listIssuers")]
+        public IActionResult ListIssuers()
         {
-            var user = _context.Users.FirstOrDefault(u => u.Email == login.Email);
-            if (user == null || !_authService.VerifyPassword(login.Password, user.Password))
-            {
-                return Unauthorized("Invalid credentials");
-            }
-
-            var token = _authService.GenerateToken(user);
-
-            return Ok(new { Token = token });
-
+            var tasks = _context.Tasks.ToList();
+            var taskIssuers = tasks.Select(tk => tk.IssuerId).ToHashSet();
+            var issuers = _context.Users.Where(u => taskIssuers.Contains(u.Id)).ToList();
+            
+            return Ok(issuers);
         }
     }
 }

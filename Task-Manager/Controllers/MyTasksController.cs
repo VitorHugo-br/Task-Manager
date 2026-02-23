@@ -5,6 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Task_Manager.Data;
 using Task_Manager.Models;
 using Task_Manager.Models.DTO;
+using Task_Manager.Models.Enums;
 using Task_Manager.Services;
 
 namespace Task_Manager.Controllers
@@ -28,18 +29,28 @@ namespace Task_Manager.Controllers
         }
 
         [HttpGet]
-        [Route("GetTaskById/{id}")]
-        public async Task<ActionResult<MyTask>> GetTaskById(int id)
+        [Route("GetTasksFiltered")]
+        public async Task<ActionResult<IEnumerable<MyTask>>> GetTasks([FromQuery] int? TaskId, [FromQuery] int? UserId, [FromQuery] int? IssuerId, [FromQuery] DateTime? CreationDate, [FromQuery] DateTime? DueDate, [FromQuery] int? Status)
         {
 
-            var task = await _context.Tasks.FindAsync(id);
+            var tasksQuery = _context.Tasks.AsQueryable();
 
-            if (task == null)
-            {
-                return NotFound("Task not found!");
-            }
+            if (TaskId.HasValue)
+                tasksQuery = tasksQuery.Where(t => t.Id == TaskId.Value);
+            if (UserId.HasValue)
+                tasksQuery = tasksQuery.Where(t => t.UserId == UserId.Value);
+            if (IssuerId.HasValue)
+                tasksQuery = tasksQuery.Where(t => t.IssuerId == IssuerId.Value);
+            if (CreationDate.HasValue)
+                tasksQuery = tasksQuery.Where(t => t.CreatedAt.HasValue && t.CreatedAt.Value.Date == CreationDate.Value.Date);
+            if (DueDate.HasValue)
+                tasksQuery = tasksQuery.Where(t => t.DueDate.HasValue && t.DueDate.Value.Date == DueDate.Value.Date);
+            if (Status.HasValue)
+                tasksQuery = tasksQuery.Where(t => t.Status == (Status)Status.Value);
 
-            return Ok(task);
+            var filteredTasks = await tasksQuery.ToListAsync();
+            return Ok(filteredTasks);
+
         }
 
         [HttpPost]
@@ -65,7 +76,7 @@ namespace Task_Manager.Controllers
                 StartDate = task.StartDate,
                 EndDate = task.EndDate,
                 DueDate = task.DueDate,
-                RequestedBy = user.Name,
+                IssuerId = user.Id,
                 UserId = task.UserId
             };
 
@@ -79,12 +90,6 @@ namespace Task_Manager.Controllers
         [Route("UpdateTask/{id}")]
         public async Task<IActionResult> UpdateTask(int id, TaskDTO task)
         {
-            //Verificar se o token é válido
-            //var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-            //var isValidToken = _authService.ValidateToken(bearerToken);
-            //if (!isValidToken) return Unauthorized("Invalid Credentials");
-
-            //Verificar se a task existe
             if (task == null) return BadRequest("Task data is required.");
             if (!TaskExists(id)) return BadRequest($"TaskID: {id} doesn't exist!");
 

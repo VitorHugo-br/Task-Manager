@@ -14,7 +14,8 @@ namespace Task_Manager.Models
         public DateTime? StartDate { get; set; } = null;
         public DateTime? EndDate { get; set; } = null;
         public DateTime? DueDate { get; set; }
-        public required string RequestedBy { get; set; }
+        public int IssuerId { get; set; }
+        public User? Issuer { get; set; }
         public int? UserId { get; set; }
         public User? User { get; set; }
         public DateTime? CreatedAt { get; set; } = DateTime.Now;
