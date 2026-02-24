@@ -13,7 +13,7 @@ namespace Task_Manager.Controllers
     [ApiController]
     [Route("[controller]")]
     [Authorize]
-    public class MyTasksController(TaskDbContext context, AuthService authService) : Controller
+    public class MyTasksController(TaskDbContext context, AuthService authService) : ControllerBase
     {
         private readonly TaskDbContext _context = context;
         private readonly AuthService _authService = authService;

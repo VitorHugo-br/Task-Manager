@@ -6,13 +6,14 @@ namespace Task_Manager.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class UserController(TaskDbContext context) : Controller
+    public class UserController(TaskDbContext context) : ControllerBase
     {
 
         private readonly TaskDbContext _context = context;
 
         [HttpGet]
         [Route("listUsers")]
+        [ProducesResponseType<int>(StatusCodes.Status200OK)]
         public IActionResult ListUsers()
         {
             var users = _context.Users.ToList();
@@ -21,6 +22,7 @@ namespace Task_Manager.Controllers
 
         [HttpGet]
         [Route("listIssuers")]
+        [ProducesResponseType<int>(StatusCodes.Status200OK)]
         public IActionResult ListIssuers()
         {
             var tasks = _context.Tasks.ToList();

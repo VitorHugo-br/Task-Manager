@@ -9,7 +9,7 @@ namespace Task_Manager.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class AuthController : Controller
+    public class AuthController : ControllerBase
     {
 
         private readonly TaskDbContext _context;
