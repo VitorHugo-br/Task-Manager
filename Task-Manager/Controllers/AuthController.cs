@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Task_Manager.Data;
 using Task_Manager.Models;
 using Task_Manager.Models.DTO;
@@ -8,19 +9,25 @@ namespace Task_Manager.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class AuthController(TaskDbContext context, AuthService authService) : Controller
+    public class AuthController : Controller
     {
 
-        private readonly TaskDbContext _context = context;
-        private readonly AuthService _authService = authService;
+        private readonly TaskDbContext _context;
+        private readonly AuthService _authService;
+
+        public AuthController(TaskDbContext context, AuthService authService)
+        {
+            _context = context;
+            _authService = authService;
+        }
 
         [HttpPost]
         [Route("register")]
         public async Task<IActionResult> Create([FromBody] UserDTO user)
         {
             if (user == null) return BadRequest("Invalid data");
-           
-            if (_context.Users.Any(u => u.Email == user.Email)) return BadRequest("User already exists");
+
+            if (await _context.Users.AnyAsync(u => u.Email == user.Email)) return BadRequest("User already exists");
 
             var newUser = new User
             {
@@ -29,18 +36,20 @@ namespace Task_Manager.Controllers
                 Password = _authService.GetHashedPassword(user.Password),
                 Role = user.Role
             };
-            
+
             await _context.Users.AddAsync(newUser);
             await _context.SaveChangesAsync();
 
-            return Created();
+            return CreatedAtAction(nameof(Create), new { id = newUser.Id }, new { Id = newUser.Id });
         }
 
         [HttpPost]
         [Route("login")]
-        public IActionResult Login([FromBody] LoginDTO login)
+        public async Task<IActionResult> Login([FromBody] LoginDTO login)
         {
-            var user = _context.Users.FirstOrDefault(u => u.Email == login.Email);
+            if (login == null) return BadRequest("Invalid data");
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == login.Email);
             if (user == null || !_authService.VerifyPassword(login.Password, user.Password))
             {
                 return Unauthorized("Invalid credentials");
