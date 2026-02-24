@@ -2,7 +2,7 @@
 
 namespace Task_Manager.Models.DTO
 {
-    public class TaskDTO
+    public class TaskDto
     {
         public required string Title { get; set; }
         public required string Description { get; set; }

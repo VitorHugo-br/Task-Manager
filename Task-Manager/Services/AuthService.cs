@@ -30,7 +30,7 @@ namespace Task_Manager.Services
             return tokenString;
         }
 
-        public ClaimsIdentity GenerateClaims(User user)
+        public static ClaimsIdentity GenerateClaims(User user)
         {
             var ci = new ClaimsIdentity();
             ci.AddClaim(new Claim(ClaimTypes.Email, user.Email));
@@ -39,7 +39,7 @@ namespace Task_Manager.Services
             return ci;
         }
 
-        public string GetHashedPassword(string password)
+        public static string GetHashedPassword(string password)
         {
             var bytes = Encoding.UTF8.GetBytes(password);
             var hash = SHA256.HashData(bytes);

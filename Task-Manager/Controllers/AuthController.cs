@@ -45,7 +45,7 @@ namespace Task_Manager.Controllers
 
         [HttpPost]
         [Route("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDTO login)
+        public async Task<IActionResult> Login([FromBody] LoginDto login)
         {
             if (login == null) return BadRequest("Invalid data");
 

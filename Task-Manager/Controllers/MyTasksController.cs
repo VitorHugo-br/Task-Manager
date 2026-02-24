@@ -55,7 +55,7 @@ namespace Task_Manager.Controllers
 
         [HttpPost]
         [Route("CreateTask")]
-        public async Task<ActionResult<MyTask>> CreateTask([FromBody] TaskDTO task)
+        public async Task<ActionResult<MyTask>> CreateTask([FromBody] TaskDto task)
         {
 
             var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
@@ -88,7 +88,7 @@ namespace Task_Manager.Controllers
         //TODO: Modificar o update para receber apenas os campos que podem ser atualizados, e não o objeto inteiro. e possibitar o update parcial, ou seja, atualizar apenas os campos que foram enviados no request.
         [HttpPut]
         [Route("UpdateTask/{id}")]
-        public async Task<IActionResult> UpdateTask(int id, TaskDTO task)
+        public async Task<IActionResult> UpdateTask(int id, TaskDto task)
         {
             if (task == null) return BadRequest("Task data is required.");
             if (!TaskExists(id)) return BadRequest($"TaskID: {id} doesn't exist!");
