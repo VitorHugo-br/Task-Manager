@@ -23,7 +23,7 @@ namespace Task_Manager.Controllers
 
         [HttpPost]
         [Route("register")]
-        public async Task<IActionResult> Create([FromBody] UserDTO user)
+        public async Task<IActionResult> Create([FromBody] UserDto user)
         {
             if (user == null) return BadRequest("Invalid data");
 

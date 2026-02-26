@@ -4,8 +4,8 @@ namespace Task_Manager.Models.DTO
 {
     public class TaskDto
     {
-        public required string Title { get; set; }
-        public required string Description { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
         public Status Status { get; set; } = Status.Pending;
         public DateTime? StartDate { get; set; } = null;
         public DateTime? EndDate { get; set; } = null;

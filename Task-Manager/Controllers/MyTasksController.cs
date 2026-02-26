@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using Task_Manager.Data;
+using Task_Manager.Extensions;
 using Task_Manager.Models;
 using Task_Manager.Models.DTO;
 using Task_Manager.Models.Enums;
@@ -22,35 +24,31 @@ namespace Task_Manager.Controllers
         [Route("GetTasks")]
         public async Task<ActionResult<IEnumerable<MyTask>>> GetTasks()
         {
-
             var tasks = await _context.Tasks.ToListAsync();
-
             return Ok(tasks);
         }
 
         [HttpGet]
         [Route("GetTasksFiltered")]
-        public async Task<ActionResult<IEnumerable<MyTask>>> GetTasks([FromQuery] int? TaskId, [FromQuery] int? UserId, [FromQuery] int? IssuerId, [FromQuery] DateTime? CreationDate, [FromQuery] DateTime? DueDate, [FromQuery] int? Status)
+        public async Task<ActionResult<IEnumerable<MyTask>>> GetTasks([FromQuery] FilterTasksDto filterTasksDto)
         {
 
             var tasksQuery = _context.Tasks.AsQueryable();
-
-            if (TaskId.HasValue)
-                tasksQuery = tasksQuery.Where(t => t.Id == TaskId.Value);
-            if (UserId.HasValue)
-                tasksQuery = tasksQuery.Where(t => t.UserId == UserId.Value);
-            if (IssuerId.HasValue)
-                tasksQuery = tasksQuery.Where(t => t.IssuerId == IssuerId.Value);
-            if (CreationDate.HasValue)
-                tasksQuery = tasksQuery.Where(t => t.CreatedAt.HasValue && t.CreatedAt.Value.Date == CreationDate.Value.Date);
-            if (DueDate.HasValue)
-                tasksQuery = tasksQuery.Where(t => t.DueDate.HasValue && t.DueDate.Value.Date == DueDate.Value.Date);
-            if (Status.HasValue)
-                tasksQuery = tasksQuery.Where(t => t.Status == (Status)Status.Value);
-
+            tasksQuery = AddFilters(filterTasksDto, tasksQuery);
             var filteredTasks = await tasksQuery.ToListAsync();
             return Ok(filteredTasks);
 
+        }
+
+        private static IQueryable<MyTask> AddFilters(FilterTasksDto filter, IQueryable<MyTask> tasksQuery)
+        {
+            return tasksQuery
+                .WhereIf(filter.TaskId.HasValue, t => t.Id == filter.TaskId!.Value)
+                .WhereIf(filter.UserId.HasValue, t => t.UserId == filter.UserId!.Value)
+                .WhereIf(filter.IssuerId.HasValue, t => t.IssuerId == filter.IssuerId!.Value)
+                .WhereIf(filter.Status.HasValue, t => t.Status == filter.Status!.Value)
+                .WhereIf(filter.CreationDate.HasValue, t => t.CreatedAt.HasValue && t.CreatedAt.Value.Date == filter.CreationDate!.Value.Date)
+                .WhereIf(filter.DueDate.HasValue, t => t.DueDate.HasValue && t.DueDate.Value.Date == filter.DueDate!.Value.Date);
         }
 
         [HttpPost]
@@ -59,7 +57,6 @@ namespace Task_Manager.Controllers
         {
 
             var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(bearerToken);
             var userEmail = jwtToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
@@ -72,7 +69,7 @@ namespace Task_Manager.Controllers
                 Title = task.Title,
                 Guid = Guid.NewGuid(),
                 Description = task.Description,
-                Status = task.Status,
+                Status = (Status)task.Status,
                 StartDate = task.StartDate,
                 EndDate = task.EndDate,
                 DueDate = task.DueDate,
@@ -85,33 +82,28 @@ namespace Task_Manager.Controllers
             return Created();
         }
 
-        //TODO: Modificar o update para receber apenas os campos que podem ser atualizados, e não o objeto inteiro. e possibitar o update parcial, ou seja, atualizar apenas os campos que foram enviados no request.
-        [HttpPut]
+        [HttpPatch]
         [Route("UpdateTask/{id}")]
-        public async Task<IActionResult> UpdateTask(int id, TaskDto task)
+        public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskDto task)
         {
-            if (task == null) return BadRequest("Task data is required.");
-            if (!TaskExists(id)) return BadRequest($"TaskID: {id} doesn't exist!");
+            if (id == 0) return BadRequest("Id must be valid");
 
-            var ExistingTask = await _context.Tasks.FirstAsync(tk => tk.Id == id);
+            var existingTask = await _context.Tasks.FindAsync(id);
+            if (existingTask == null) return NotFound("Task not found");
 
-            ExistingTask.Title = task.Title;
-            ExistingTask.Description = task.Description;
-            ExistingTask.Status = task.Status;
-            ExistingTask.StartDate = task.StartDate;
-            ExistingTask.EndDate = task.EndDate;
-            ExistingTask.DueDate = task.DueDate;
-            ExistingTask.User = await _context.Users.FirstOrDefaultAsync(u => u.Id == task.UserId);
+            if (task.Title is not null) existingTask.Title = task.Title;
+            if (task.Description is not null) existingTask.Description = task.Description;
+            if (task.Status != existingTask.Status) existingTask.Status = task.Status;
+            if (task.StartDate is not null) existingTask.StartDate = task.StartDate;
+            if (task.EndDate is not null) existingTask.EndDate = task.EndDate;
+            if (task.DueDate is not null) existingTask.DueDate = task.DueDate;
+            if (task.UserId is not null) existingTask.UserId = task.UserId;
 
-            _context.Entry(ExistingTask).State = EntityState.Modified;
+            _context.Entry(existingTask).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-            return Ok($"Task {ExistingTask.Id} updated");
+            return Created();
 
         }
 
-        private bool TaskExists(int id)
-        {
-            return _context.Tasks.Any(e => e.Id == id);
-        }
     }
 }

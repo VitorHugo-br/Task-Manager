@@ -28,7 +28,6 @@ namespace Task_Manager.Controllers
             var tasks = _context.Tasks.ToList();
             var taskIssuers = tasks.Select(tk => tk.IssuerId).ToHashSet();
             var issuers = _context.Users.Where(u => taskIssuers.Contains(u.Id)).ToList();
-            
             return Ok(issuers);
         }
     }

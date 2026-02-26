@@ -14,6 +14,8 @@ namespace Task_Manager.Data
 
         public DbSet<ErrorLog> ErrorLogs { get; set; }
 
+        public DbSet<Comment> Comments { get; set; }
+
         override protected void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseMySQL(_configuration.GetConnectionString("DefaultConnection")!);

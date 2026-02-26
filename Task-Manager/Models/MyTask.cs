@@ -20,5 +20,6 @@ namespace Task_Manager.Models
         public User? User { get; set; }
         public DateTime? CreatedAt { get; set; } = DateTime.Now;
 
+
     }
 }
