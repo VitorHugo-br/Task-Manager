@@ -1,13 +1,12 @@
 ﻿using System.Linq.Expressions;
 
-namespace Task_Manager.Extensions
+namespace Task_Manager.Extensions;
+
+public static class QueryableExtensions
 {
-    public static class QueryableExtensions
-    {
-        public static IQueryable<T> WhereIf<T>(
-           this IQueryable<T> query,
-           bool condition,
-           Expression<Func<T, bool>> predicate)
-           => condition ? query.Where(predicate) : query;
-    }
+    public static IQueryable<T> WhereIf<T>(
+        this IQueryable<T> query,
+        bool condition,
+        Expression<Func<T, bool>> predicate)
+        => condition ? query.Where(predicate) : query;
 }

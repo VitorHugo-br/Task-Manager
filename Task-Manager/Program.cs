@@ -10,6 +10,7 @@ using Task_Manager.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddTransient<AuthService>();
+builder.Services.AddTransient<RedisService>();
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["SecretKey"]!);
 

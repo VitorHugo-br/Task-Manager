@@ -1,109 +1,134 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
+using Newtonsoft.Json;
+using NRedisStack.RedisStackCommands;
+using StackExchange.Redis;
 using Task_Manager.Data;
 using Task_Manager.Extensions;
+using Task_Manager.Helpers;
 using Task_Manager.Models;
 using Task_Manager.Models.DTO;
-using Task_Manager.Models.Enums;
 using Task_Manager.Services;
 
-namespace Task_Manager.Controllers
+namespace Task_Manager.Controllers;
+
+[ApiController]
+[Authorize]
+[Route("[controller]")]
+public class MyTasksController(TaskDbContext context, RedisService redisService) : ControllerBase
 {
-    [ApiController]
-    [Route("[controller]")]
-    [Authorize]
-    public class MyTasksController(TaskDbContext context, AuthService authService) : ControllerBase
+    private readonly IDatabase _redis = redisService.GetDatabase();
+
+    [HttpGet]
+    [Route("GetTasks")]
+    public async Task<ActionResult<IEnumerable<MyTask>>> GetTasks()
     {
-        private readonly TaskDbContext _context = context;
-        private readonly AuthService _authService = authService;
+        var tasksFromRedis = _redis.JSON().Get("tasks");
 
-        [HttpGet]
-        [Route("GetTasks")]
-        public async Task<ActionResult<IEnumerable<MyTask>>> GetTasks()
+        if (!tasksFromRedis.IsNull)
         {
-            var tasks = await _context.Tasks.ToListAsync();
-            return Ok(tasks);
+            var deserializedTasks = JsonConvert.DeserializeObject<List<MyTask>>(tasksFromRedis.ToString());
+            return Ok(value: deserializedTasks);
         }
 
-        [HttpGet]
-        [Route("GetTasksFiltered")]
-        public async Task<ActionResult<IEnumerable<MyTask>>> GetTasks([FromQuery] FilterTasksDto filterTasksDto)
+        var tasks = await context
+            .Tasks
+            .AsNoTracking()
+            .ToListAsync();
+
+        _redis.JSON().Set("tasks", "$", tasks);
+        _redis.KeyExpire("tasks", TimeSpan.FromMinutes(10));
+
+        return Ok(tasks);
+    }
+
+    [HttpGet]
+    [Route("GetTasksFiltered")]
+    public async Task<ActionResult<IEnumerable<MyTask>>> GetTasks([FromQuery] FilterTasksDto filterTasksDto)
+    {
+        var cacheKey = CacheKeyHelper.BuildFilterKey("tasks", filterTasksDto);
+
+        var cached = _redis.JSON().Get(cacheKey);
+        if (!cached.IsNull)
         {
-
-            var tasksQuery = _context.Tasks.AsQueryable();
-            tasksQuery = AddFilters(filterTasksDto, tasksQuery);
-            var filteredTasks = await tasksQuery.ToListAsync();
-            return Ok(filteredTasks);
-
+            var cachedTasks = JsonConvert.DeserializeObject<List<MyTask>>(cached.ToString());
+            return Ok(cachedTasks);
         }
 
-        private static IQueryable<MyTask> AddFilters(FilterTasksDto filter, IQueryable<MyTask> tasksQuery)
+        var tasksQuery = context.Tasks.AsQueryable();
+        tasksQuery = AddFilters(filterTasksDto, tasksQuery);
+        var filteredTasks = await tasksQuery.ToListAsync();
+        
+        _redis.JSON().Set(cacheKey, "$", filteredTasks);
+        _redis.KeyExpire(cacheKey, TimeSpan.FromMinutes(5));
+        
+        return Ok(filteredTasks);
+    }
+
+    private static IQueryable<MyTask> AddFilters(FilterTasksDto filter, IQueryable<MyTask> tasksQuery)
+    {
+        return tasksQuery
+            .WhereIf(filter.TaskId.HasValue, t => t.Id == filter.TaskId!.Value)
+            .WhereIf(filter.UserId.HasValue, t => t.UserId == filter.UserId!.Value)
+            .WhereIf(filter.IssuerId.HasValue, t => t.IssuerId == filter.IssuerId!.Value)
+            .WhereIf(filter.Status.HasValue, t => t.Status == filter.Status!.Value)
+            .WhereIf(filter.CreationDate.HasValue,
+                t => t.CreatedAt.HasValue && t.CreatedAt.Value.Date == filter.CreationDate!.Value.Date)
+            .WhereIf(filter.DueDate.HasValue,
+                t => t.DueDate.HasValue && t.DueDate.Value.Date == filter.DueDate!.Value.Date);
+    }
+
+    [HttpPost]
+    [Route("CreateTask")]
+    public async Task<ActionResult<MyTask>> CreateTask([FromBody] TaskDto task)
+    {
+        var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(bearerToken);
+        var userEmail = jwtToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+
+        if (user == null) return NotFound("User not found");
+
+        var newTask = new MyTask
         {
-            return tasksQuery
-                .WhereIf(filter.TaskId.HasValue, t => t.Id == filter.TaskId!.Value)
-                .WhereIf(filter.UserId.HasValue, t => t.UserId == filter.UserId!.Value)
-                .WhereIf(filter.IssuerId.HasValue, t => t.IssuerId == filter.IssuerId!.Value)
-                .WhereIf(filter.Status.HasValue, t => t.Status == filter.Status!.Value)
-                .WhereIf(filter.CreationDate.HasValue, t => t.CreatedAt.HasValue && t.CreatedAt.Value.Date == filter.CreationDate!.Value.Date)
-                .WhereIf(filter.DueDate.HasValue, t => t.DueDate.HasValue && t.DueDate.Value.Date == filter.DueDate!.Value.Date);
-        }
+            Title = task.Title,
+            Guid = Guid.NewGuid(),
+            Description = task.Description,
+            Status = task.Status,
+            StartDate = task.StartDate,
+            EndDate = task.EndDate,
+            DueDate = task.DueDate,
+            IssuerId = user.Id,
+            UserId = task.UserId
+        };
 
-        [HttpPost]
-        [Route("CreateTask")]
-        public async Task<ActionResult<MyTask>> CreateTask([FromBody] TaskDto task)
-        {
+        context.Tasks.Add(newTask);
+        await context.SaveChangesAsync();
+        return Created();
+    }
 
-            var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(bearerToken);
-            var userEmail = jwtToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+    [HttpPatch]
+    [Route("UpdateTask/{id}")]
+    public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskDto task)
+    {
+        if (id == 0) return BadRequest("Id must be valid");
 
-            if (user == null) return NotFound("User not found");
+        var existingTask = await context.Tasks.FindAsync(id);
+        if (existingTask == null) return NotFound("Task not found");
 
-            var newTask = new MyTask
-            {
-                Title = task.Title,
-                Guid = Guid.NewGuid(),
-                Description = task.Description,
-                Status = (Status)task.Status,
-                StartDate = task.StartDate,
-                EndDate = task.EndDate,
-                DueDate = task.DueDate,
-                IssuerId = user.Id,
-                UserId = task.UserId
-            };
+        existingTask.Title = task.Title;
+        existingTask.Description = task.Description;
+        if (task.Status != existingTask.Status) existingTask.Status = task.Status;
+        if (task.StartDate is not null) existingTask.StartDate = task.StartDate;
+        if (task.EndDate is not null) existingTask.EndDate = task.EndDate;
+        if (task.DueDate is not null) existingTask.DueDate = task.DueDate;
+        if (task.UserId is not null) existingTask.UserId = task.UserId;
 
-            _context.Tasks.Add(newTask);
-            await _context.SaveChangesAsync();
-            return Created();
-        }
-
-        [HttpPatch]
-        [Route("UpdateTask/{id}")]
-        public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskDto task)
-        {
-            if (id == 0) return BadRequest("Id must be valid");
-
-            var existingTask = await _context.Tasks.FindAsync(id);
-            if (existingTask == null) return NotFound("Task not found");
-
-            if (task.Title is not null) existingTask.Title = task.Title;
-            if (task.Description is not null) existingTask.Description = task.Description;
-            if (task.Status != existingTask.Status) existingTask.Status = task.Status;
-            if (task.StartDate is not null) existingTask.StartDate = task.StartDate;
-            if (task.EndDate is not null) existingTask.EndDate = task.EndDate;
-            if (task.DueDate is not null) existingTask.DueDate = task.DueDate;
-            if (task.UserId is not null) existingTask.UserId = task.UserId;
-
-            _context.Entry(existingTask).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return Created();
-
-        }
-
+        context.Entry(existingTask).State = EntityState.Modified;
+        await context.SaveChangesAsync();
+        return Created();
     }
 }
