@@ -11,6 +11,10 @@ namespace Task_Manager.Data
         public DbSet<User> Users { get; set; }
 
         public DbSet<Comment> Comments { get; set; }
+        
+        public DbSet<AuditLog> AuditLogs { get; set; }
+        
+        public DbSet<SystemLog> SystemLogs { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

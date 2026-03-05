@@ -1,16 +1,17 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http.Json;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using System.Text;
-using System.Text.Json.Serialization;
 using Task_Manager.Data;
+using Task_Manager.Interfaces;
 using Task_Manager.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddTransient<AuthService>();
 builder.Services.AddTransient<RedisService>();
+builder.Services.AddTransient<AuditService>();
+builder.Services.AddScoped<ILogService,LogService>();
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["SecretKey"]!);
 
@@ -53,8 +54,10 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference("/api-docs");
 }
 
+
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

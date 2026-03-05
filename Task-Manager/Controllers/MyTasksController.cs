@@ -7,7 +7,6 @@ using NRedisStack.RedisStackCommands;
 using StackExchange.Redis;
 using Task_Manager.Data;
 using Task_Manager.Extensions;
-using Task_Manager.Helpers;
 using Task_Manager.Models;
 using Task_Manager.Models.DTO;
 using Task_Manager.Services;
@@ -48,21 +47,21 @@ public class MyTasksController(TaskDbContext context, RedisService redisService)
     [Route("GetTasksFiltered")]
     public async Task<ActionResult<IEnumerable<MyTask>>> GetTasks([FromQuery] FilterTasksDto filterTasksDto)
     {
-        var cacheKey = CacheKeyHelper.BuildFilterKey("tasks", filterTasksDto);
-
-        var cached = _redis.JSON().Get(cacheKey);
-        if (!cached.IsNull)
-        {
-            var cachedTasks = JsonConvert.DeserializeObject<List<MyTask>>(cached.ToString());
-            return Ok(cachedTasks);
-        }
+        // var cacheKey = CacheKeyHelper.BuildFilterKey("tasks", filterTasksDto);
+        //
+        // var cached = _redis.JSON().Get(cacheKey);
+        // if (!cached.IsNull)
+        // {
+        //     var cachedTasks = JsonConvert.DeserializeObject<List<MyTask>>(cached.ToString());
+        //     return Ok(cachedTasks);
+        // }
 
         var tasksQuery = context.Tasks.AsQueryable();
         tasksQuery = AddFilters(filterTasksDto, tasksQuery);
         var filteredTasks = await tasksQuery.ToListAsync();
         
-        _redis.JSON().Set(cacheKey, "$", filteredTasks);
-        _redis.KeyExpire(cacheKey, TimeSpan.FromMinutes(5));
+        // _redis.JSON().Set(cacheKey, "$", filteredTasks);
+        // _redis.KeyExpire(cacheKey, TimeSpan.FromMinutes(5));
         
         return Ok(filteredTasks);
     }
@@ -105,7 +104,7 @@ public class MyTasksController(TaskDbContext context, RedisService redisService)
             UserId = task.UserId
         };
 
-        context.Tasks.Add(newTask);
+        await context.Tasks.AddAsync(newTask);
         await context.SaveChangesAsync();
         return Created();
     }
@@ -129,6 +128,10 @@ public class MyTasksController(TaskDbContext context, RedisService redisService)
 
         context.Entry(existingTask).State = EntityState.Modified;
         await context.SaveChangesAsync();
+        
+        _redis.KeyDelete("tasks");
+        redisService.RemoveByPattern("tasks-filtered:*");
+        
         return Created();
     }
 }
