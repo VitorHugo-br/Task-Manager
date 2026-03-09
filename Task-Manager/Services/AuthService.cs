@@ -10,12 +10,10 @@ namespace Task_Manager.Services
     public class AuthService(IConfiguration configuration)
     {
 
-        private readonly IConfiguration _configuration = configuration;
-
         public string GenerateToken(User user)
         {
             var handler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration.GetSection("SecretKey").Value!);
+            var key = Encoding.ASCII.GetBytes(configuration.GetSection("SecretKey").Value!);
             var credentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature);
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -30,7 +28,7 @@ namespace Task_Manager.Services
             return tokenString;
         }
 
-        public ClaimsIdentity GenerateClaims(User user)
+        private static ClaimsIdentity GenerateClaims(User user)
         {
             var ci = new ClaimsIdentity();
             ci.AddClaim(new Claim(ClaimTypes.Email, user.Email));

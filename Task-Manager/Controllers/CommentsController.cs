@@ -33,7 +33,6 @@ public class CommentsController(TaskDbContext context, RedisService redisService
         return Ok("Comment added successfully.");
     }
 
-    //TODO: Limitar a edição e exclusão de comentários apenas para o autor ou para administradores
     [HttpPatch]
     [Route("DeleteComment/")]
     [Authorize(Roles = "Admin")]
