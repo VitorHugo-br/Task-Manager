@@ -29,7 +29,7 @@ public class AuthController(
         {
             Name = user.Name,
             Email = user.Email,
-            Password = authService.GetHashedPassword(user.Password),
+            Password = AuthService.GetHashedPassword(user.Password),
             Role = user.Role
         };
 

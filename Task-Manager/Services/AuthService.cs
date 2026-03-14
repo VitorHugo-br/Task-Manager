@@ -37,7 +37,7 @@ namespace Task_Manager.Services
             return ci;
         }
 
-        public string GetHashedPassword(string password)
+        public static string GetHashedPassword(string password)
         {
             var bytes = Encoding.UTF8.GetBytes(password);
             var hash = SHA256.HashData(bytes);
