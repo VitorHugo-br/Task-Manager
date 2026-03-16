@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
-using Newtonsoft.Json;
+// using Newtonsoft.Json;
 using NRedisStack.RedisStackCommands;
 using StackExchange.Redis;
 using Task_Manager.Data;
@@ -24,13 +24,13 @@ public class MyTasksController(TaskDbContext context, RedisService redisService)
     [Route("GetTasks")]
     public async Task<ActionResult<IEnumerable<MyTask>>> GetTasks()
     {
-        var tasksFromRedis = _redis.JSON().Get("tasks");
-
-        if (!tasksFromRedis.IsNull)
-        {
-            var deserializedTasks = JsonConvert.DeserializeObject<List<MyTask>>(tasksFromRedis.ToString());
-            return Ok(value: deserializedTasks);
-        }
+        // var tasksFromRedis = _redis.JSON().Get("tasks");
+        //
+        // if (!tasksFromRedis.IsNull)
+        // {
+        //     var deserializedTasks = JsonConvert.DeserializeObject<List<MyTask>>(tasksFromRedis.ToString());
+        //     return Ok(value: deserializedTasks);
+        // }
 
         var tasks = await context
             .Tasks
@@ -90,22 +90,10 @@ public class MyTasksController(TaskDbContext context, RedisService redisService)
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
 
         if (user == null) return NotFound("User not found");
-
-        var newTask = new MyTask
-        {
-            Title = task.Title,
-            Guid = Guid.NewGuid(),
-            Description = task.Description,
-            Status = task.Status,
-            StartDate = task.StartDate,
-            EndDate = task.EndDate,
-            DueDate = task.DueDate,
-            IssuerId = user.Id,
-            UserId = task.UserId
-        };
-
-        await context.Tasks.AddAsync(newTask);
+        
+        await context.Tasks.AddAsync(task);
         await context.SaveChangesAsync();
+        
         return Created();
     }
 

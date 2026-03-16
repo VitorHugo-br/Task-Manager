@@ -21,15 +21,12 @@ public class CommentsController(TaskDbContext context, RedisService redisService
     [Route("AddComment")]
     public async Task<ActionResult> AddComment([FromBody] CommentDto cmt)
     {
-        var comment = new Comment
-        {
-            TaskId = cmt.taskId,
-            IssuerId = cmt.issuerId,
-            Content = cmt.content
-        };
-
-        await context.Comments.AddAsync(comment);
+        if (string.IsNullOrEmpty(cmt.Content)) return BadRequest("Content must not be empty");
+        if (cmt.TaskId == 0) return BadRequest("Task id must be valid");
+        
+        await context.Comments.AddAsync(cmt);
         await context.SaveChangesAsync();
+        
         return Ok("Comment added successfully.");
     }
 

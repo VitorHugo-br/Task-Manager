@@ -25,18 +25,10 @@ public class AuthController(
         var existingUser = await context.Users.AnyAsync(u => u.Email == user.Email);
         if (existingUser) return BadRequest("User already exists");
 
-        var newUser = new User
-        {
-            Name = user.Name,
-            Email = user.Email,
-            Password = AuthService.GetHashedPassword(user.Password),
-            Role = user.Role
-        };
-
-        await context.Users.AddAsync(newUser);
+        await context.Users.AddAsync(user);
         await context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(Create), new { id = newUser.Id }, new { newUser.Id });
+        return Created("User created successfully", user);
     }
 
     [HttpPost]
