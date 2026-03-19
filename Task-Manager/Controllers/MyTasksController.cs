@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 // using Newtonsoft.Json;
 using NRedisStack.RedisStackCommands;
 using StackExchange.Redis;
@@ -83,15 +84,18 @@ public class MyTasksController(TaskDbContext context, RedisService redisService)
     [Route("CreateTask")]
     public async Task<ActionResult<MyTask>> CreateTask([FromBody] TaskDto task)
     {
-        var bearerToken = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(bearerToken);
-        var userEmail = jwtToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+        var userEmail = HttpContext.User.FindFirstValue(ClaimTypes.Email);
+        
+        if (string.IsNullOrEmpty(userEmail)) return Unauthorized("User not authenticated");
+        
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
 
         if (user == null) return NotFound("User not found");
+
+        MyTask newTask = task;
+        newTask.IssuerId = user.Id;
         
-        await context.Tasks.AddAsync(task);
+        await context.Tasks.AddAsync(newTask);
         await context.SaveChangesAsync();
         
         return Created();
