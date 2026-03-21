@@ -20,5 +20,10 @@ namespace Task_Manager.Data
         {
             optionsBuilder.UseMySQL(configuration.GetConnectionString("DefaultConnection")!);
         }
+        
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+        }
     }
 }

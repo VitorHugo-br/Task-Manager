@@ -1,49 +1,15 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Scalar.AspNetCore;
-using System.Text;
-using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using Task_Manager;
 using Task_Manager.Data;
-using Task_Manager.Interfaces;
-using Task_Manager.Services;
+using Task_Manager.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddTransient<AuthService>();
-builder.Services.AddTransient<RedisService>();
-builder.Services.AddTransient<AuditService>();
-builder.Services.AddScoped<ILogService, LogService>();
+builder.AddMyServices();
 
-var key = Encoding.ASCII.GetBytes(builder.Configuration["SecretKey"]!);
+builder.AddMyAuthentication();
 
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(key),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ClockSkew = TimeSpan.Zero
-        };
-    });
-
-builder.Services.AddRateLimiter(limiterOptions =>
-{
-    limiterOptions.AddFixedWindowLimiter(policyName: "fixed", options =>
-    {
-        options.PermitLimit = 100;
-        options.Window = TimeSpan.FromSeconds(10);
-        options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-        options.QueueLimit = 2;
-    });
-});
+builder.AddRateLimit();
 
 builder.Services.AddAuthorization();
 
@@ -55,18 +21,15 @@ builder.Services.AddDbContext<TaskDbContext>();
 builder.Services.AddControllers();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi("v1", options =>
+{
+    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+});
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-
-    app.MapScalarApiReference("/api-docs");
-}
-
+app.ConfigureDevelopmentApiDocument();
 
 app.UseHttpsRedirection();
 
@@ -74,5 +37,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+await app.InitializeDatabaseAsync();
 
 await app.RunAsync();

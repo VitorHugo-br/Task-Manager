@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Task_Manager.Data;
+using Task_Manager.Helpers;
 using Task_Manager.Interfaces;
 using Task_Manager.Models;
 using Task_Manager.Models.DTO;
@@ -22,6 +23,8 @@ public class AuthController(
     [Route("register")]
     public async Task<IActionResult> Create([FromBody] UserDto user)
     {
+        if (!EmailVerification.IsValid(user.Email)) return BadRequest("Invalid email format");
+
         var existingUser = await context.Users.AnyAsync(u => u.Email == user.Email);
         if (existingUser) return BadRequest("User already exists");
 
@@ -37,7 +40,9 @@ public class AuthController(
     {
         try
         {
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Email == login.Email);
+            if (!EmailVerification.IsValid(login.Email)) return BadRequest("Invalid email format or empty email");
+
+            var user = await CompiledQueries.GetUserByEmail(context, login.Email);
             if (user == null || !authService.VerifyPassword(login.Password, user.Password))
             {
                 return Unauthorized("Invalid credentials");
