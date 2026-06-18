@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using System.Text;
 using System.Text.Json;
 using NRedisStack.RedisStackCommands;
 using StackExchange.Redis;
@@ -142,6 +141,7 @@ public class MyTasksController(TaskDbContext context, RedisService redisService)
         if (user == null) return NotFound("User not found");
 
         MyTask newTask = task;
+        newTask.Guid = Guid.NewGuid();
         newTask.IssuerId = user.Id;
 
         await context.Tasks.AddAsync(newTask);

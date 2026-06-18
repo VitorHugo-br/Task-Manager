@@ -10,5 +10,7 @@ public static class CacheKeyHelper
             .Select(p => $"{p.Name}={p.GetValue(filterDto)}");
 
         return $"{prefix}:{string.Join("_", props)}";
+        
+        
     }
 }

@@ -20,7 +20,9 @@ namespace Task_Manager.Services
             {
                 Subject = GenerateClaims(user),
                 Expires = DateTime.UtcNow.AddHours(1),
-                SigningCredentials = credentials
+                SigningCredentials = credentials,
+                Issuer = "TaskManager-Api",
+                Audience = "TaskManager-Front"
             };
 
             var token = handler.CreateToken(tokenDescriptor);

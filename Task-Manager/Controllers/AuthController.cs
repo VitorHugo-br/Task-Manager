@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Task_Manager.Data;
 using Task_Manager.Helpers;
 using Task_Manager.Interfaces;
-using Task_Manager.Models;
 using Task_Manager.Models.DTO;
 using Task_Manager.Services;
 
@@ -33,44 +32,6 @@ public class AuthController(
 
         return Created("User created successfully", user);
     }
-
-    [HttpPost]
-    [Route("register-bulk")]
-    public async Task<IActionResult> CreateBulk([FromBody] IEnumerable<UserDto> users)
-    {
-        var userList = users.ToList();
-
-        var emailsValidos = userList
-            .Where(u => EmailVerification.IsValid(u.Email))
-            .ToList();
-
-        if (emailsValidos.Count == 0)
-            return BadRequest("Nenhum e-mail válido informado.");
-
-        var emailsRecebidos = emailsValidos
-            .Select(u => u.Email)
-            .ToList();
-
-        // ✅ Busca emails existentes em memória — evita o bug do provider MySQL
-        var emailsExistentes = await context.Users
-            .AsNoTracking()
-            .Select(u => u.Email)
-            .ToHashSetAsync();
-
-        var novosUsuarios = emailsValidos
-            .Where(dto => !emailsExistentes.Contains(dto.Email))
-            .Select(dto => (User)dto)
-            .ToList();
-
-        if (novosUsuarios.Count == 0)
-            return BadRequest("Nenhum usuário válido para cadastrar.");
-
-        await context.Users.AddRangeAsync(novosUsuarios);
-        await context.SaveChangesAsync();
-
-        return Ok($"{novosUsuarios.Count} usuários criados com sucesso.");
-    }
-
 
     [HttpPost]
     [Route("login")]
