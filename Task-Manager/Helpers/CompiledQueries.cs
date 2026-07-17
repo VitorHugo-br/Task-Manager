@@ -6,6 +6,6 @@ namespace Task_Manager.Helpers;
 
 public static class CompiledQueries
 {
-    public static readonly Func<TaskDbContext, string, Task<User?>> GetUserByEmail =
-        EF.CompileAsyncQuery((TaskDbContext ctx, string email) => ctx.Users.FirstOrDefault(u => u.Email == email));
+    public static readonly Func<TaskDbContext, string, Task<Usuario?>> GetUserByEmail =
+        EF.CompileAsyncQuery((TaskDbContext ctx, string email) => ctx.Usuarios.FirstOrDefault(u => u.Email == email));
 }

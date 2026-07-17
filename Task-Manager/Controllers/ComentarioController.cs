@@ -10,10 +10,10 @@ using Task_Manager.Services;
 
 namespace Task_Manager.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("[controller]")]
-[Authorize]
-public class CommentsController(TaskDbContext context, RedisService redisService) : ControllerBase
+public class ComentarioController(TaskDbContext context, RedisService redisService) : ControllerBase
 {
     private readonly IDatabase _redis = redisService.GetDatabase();
 
@@ -24,7 +24,7 @@ public class CommentsController(TaskDbContext context, RedisService redisService
         if (string.IsNullOrEmpty(cmt.Content)) return BadRequest("Content must not be empty");
         if (cmt.TaskId == 0) return BadRequest("Task id must be valid");
         
-        await context.Comments.AddAsync(cmt);
+        await context.Comentarios.AddAsync(cmt);
         await context.SaveChangesAsync();
         
         return Ok("Comment added successfully.");
@@ -35,13 +35,13 @@ public class CommentsController(TaskDbContext context, RedisService redisService
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> DeleteComment([FromQuery] int commentId)
     {
-        var comment = await context.Comments.FirstOrDefaultAsync(c => c.CommentId == commentId);
+        var comment = await context.Comentarios.FirstOrDefaultAsync(c => c.ComentarioId == commentId);
         if (comment == null)
         {
             return NotFound("Comment not found.");
         }
 
-        comment.IsDeleted = true;
+        comment.Deletado = true;
         await context.SaveChangesAsync();
         return Ok("Comment deleted successfully.");
     }
@@ -50,20 +50,20 @@ public class CommentsController(TaskDbContext context, RedisService redisService
     [Route("EditComment/")]
     public async Task<ActionResult> EditComment([FromQuery] int commentId, [FromBody] CommentRequestDto updatedComment)
     {
-        var comment = await context.Comments.FindAsync(commentId);
+        var comment = await context.Comentarios.FindAsync(commentId);
         if (comment == null)
         {
             return NotFound("Comment not found.");
         }
 
-        comment.Content = updatedComment.Content;
+        comment.Conteudo = updatedComment.Content;
         await context.SaveChangesAsync();
         return Ok("Comment edited successfully.");
     }
 
     [HttpGet]
     [Route("GetCommentsByTask/{taskId}")]
-    public async Task<ActionResult<List<Comment>>> GetCommentsByTask(int taskId)
+    public async Task<ActionResult<List<Comentario>>> GetCommentsByTask(int taskId)
     {
         if (taskId == 0) return BadRequest("Task id must be valid");
 
@@ -71,12 +71,12 @@ public class CommentsController(TaskDbContext context, RedisService redisService
         var cached = await _redis.StringGetAsync(cacheKey);
         if (cached.HasValue)
         {
-            var cachedComments = JsonSerializer.Deserialize<List<Comment>>(cached.ToString());
+            var cachedComments = JsonSerializer.Deserialize<List<Comentario>>(cached.ToString());
             return Ok(cachedComments);
         }
 
-        var comments = await context.Comments
-            .Where(c => c.TaskId == taskId && !c.IsDeleted)
+        var comments = await context.Comentarios
+            .Where(c => c.ChamadoId == taskId && !c.Deletado)
             .AsNoTracking()
             .ToListAsync();
 

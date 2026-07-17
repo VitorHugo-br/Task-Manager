@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 /Task-Manager/appsettings.json
 /Task-Manager/appsettings.json
+/.idea/.idea.Task-Manager/.idea
+/Task-Manager/Uploads

@@ -1,0 +1,6 @@
+services:
+  task-manager:
+    image: ${DOCKER_REGISTRY-}taskmanager
+    build:
+      context: .
+      dockerfile: Task-Manager/Dockerfile

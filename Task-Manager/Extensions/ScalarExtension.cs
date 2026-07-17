@@ -16,7 +16,7 @@ public static class ScalarExtension
             options.Title = "Task Manager API";
             options.AddPreferredSecuritySchemes(JwtBearerDefaults.AuthenticationScheme)
                 .AddHttpAuthentication(JwtBearerDefaults.AuthenticationScheme,
-                    auth => { auth.Token = "Put your token here"; })
+                    auth => { auth.Token = ""; })
                 .EnablePersistentAuthentication();
         });
     }

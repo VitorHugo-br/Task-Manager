@@ -1,10 +1,9 @@
-﻿namespace Task_Manager.Models.Enums
+﻿namespace Task_Manager.Models.Enums;
+
+public enum Status
 {
-    public enum Status
-    {
-        Pending,
-        InProgress,
-        Completed,
-        Delivered,
-    }
+    Pendente,
+    Desenvolvimento,
+    Concluido,
+    Entregue,
 }

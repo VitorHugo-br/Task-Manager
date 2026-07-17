@@ -44,10 +44,10 @@ public class RedisService : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public void AddInRedis(string key, object value, TimeSpan? expiry = null)
+    public void AddInRedis(string key, object value)
     {
         var db = GetDatabase();
-        db.StringSet(key, JsonSerializer.Serialize(value), expiry);
+        db.StringSet(key, JsonSerializer.Serialize(value));
     }
 
     public T? GetFromRedis<T>(string key)

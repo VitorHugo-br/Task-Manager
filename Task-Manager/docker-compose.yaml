@@ -1,0 +1,50 @@
+services:
+  mysql_db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: pwdroot
+      MYSQL_DATABASE: taskDB
+      MYSQL_USER: user_vitorhugo
+      MYSQL_PASSWORD: vi@@2022
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis/redis-stack-server:latest
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: miniopwd
+    volumes: 
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs
+    restart: unless-stopped
+    command: server -dir=/data -s3
+    ports:
+      - "8333:8333" # API S3
+      - "9333:9333" # Dashboard
+    volumes:
+      - seaweed_data:/data
+
+volumes:
+  mysql_data:
+  minio_data:
+  seaweed_data:

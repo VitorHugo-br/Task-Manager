@@ -2,11 +2,11 @@
 {
     public record CommentDto(int TaskId, int IssuerId, string Content)
     {
-        public static implicit operator Comment(CommentDto comm) => new Comment()
+        public static implicit operator Comentario(CommentDto comm) => new Comentario()
         {
-            TaskId = comm.TaskId,
-            IssuerId = comm.IssuerId,
-            Content = comm.Content
+            ChamadoId = comm.TaskId,
+            RemetenteId = comm.IssuerId,
+            Conteudo = comm.Content
         };
     };
 }
