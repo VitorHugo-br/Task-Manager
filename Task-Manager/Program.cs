@@ -9,6 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AdicionarServices();
 
+builder.ConfigurarMinIO();
+
 builder.AddMyAuthentication();
 
 builder.AddRateLimit();

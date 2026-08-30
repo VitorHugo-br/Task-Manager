@@ -1,26 +1,25 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Task_Manager.Services;
 
 namespace Task_Manager.Controllers;
 
 [Authorize]
 [ApiController]
 [Route("[controller]")]
-public class UploadController : ControllerBase
+public class UploadController(MinIoStorageService storageService) : ControllerBase
 {
     [HttpPost("{chamadoId}")]
     public async Task<IActionResult> ProcessarArquivos(int chamadoId, [FromForm] IFormFileCollection arquivos)
     {
         if (arquivos == null || arquivos.Count == 0) return BadRequest();
 
-        var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
-        Directory.CreateDirectory(uploadPath);
-
-        foreach (var arquivo in arquivos)
+        foreach(var arquivo in arquivos)
         {
-            var filePath = Path.Combine(uploadPath, arquivo.FileName);
-            using var stream = new FileStream(filePath, FileMode.Create);
-            await arquivo.CopyToAsync(stream);
+            var objectName = $"{chamadoId}/{arquivo.FileName}";
+            using var stream = arquivo.OpenReadStream();
+
+            await storageService.UploadFileAsync("taskmanager-arquivos", objectName, stream, arquivo.ContentType);
         }
 
         return Ok();
